@@ -10,6 +10,8 @@ public class _141CleaningController : ControllerBase
 {
     private readonly ILogger<_141CleaningController> _logger;
 
+    private readonly SlackConnector _slackConnector;
+
     private readonly IEnumerable<ICommand> _commandTree;
 
     private readonly IEnumerable<CommandValidation> _commandValidations;
@@ -17,6 +19,8 @@ public class _141CleaningController : ControllerBase
     public _141CleaningController(ILogger<_141CleaningController> logger)
     {
         _logger = logger;
+        var client = new HttpClient();
+        _slackConnector = new SlackConnector(client);
 
         _commandTree = new List<ICommand>
         {
@@ -33,13 +37,13 @@ public class _141CleaningController : ControllerBase
     }
 
     [HttpGet]
-    public string Get(string?userId, string? channelId, string? command)
+    public string Get(string?userId, string? channelId, string? command, string? responseUrl)
     {
         if(!ValidateCommand(userId, channelId))
-            return "Invalid user";
+            return respondToUrl(responseUrl,"Invalid user");
 
         if(!(command is string))
-            return "Null command";
+            return respondToUrl(responseUrl,"Null command");
 
         var commandMatches = _commandTree.Where(c => {
             return Regex.Match(command, c.Regex, RegexOptions.IgnoreCase).Success;
@@ -47,11 +51,11 @@ public class _141CleaningController : ControllerBase
 
         if(commandMatches.Count() == 1)
         {
-            return commandMatches.Single().Execute(command);
+            return respondToUrl(responseUrl, commandMatches.Single().Execute(command));
         }
         else
         {
-            return $"Invalid command: {command}";
+            return respondToUrl(responseUrl,$"Invalid command: {command}");
         }
     }
 
@@ -67,5 +71,11 @@ public class _141CleaningController : ControllerBase
         
         //ELSE
         return false;
+    }
+
+    private string respondToUrl(string responseUrl, string message)
+    {
+        _slackConnector.RespondToUrl(responseUrl, message);
+        return message;
     }
 }
