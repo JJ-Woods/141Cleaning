@@ -39,7 +39,8 @@ public class _141CleaningController : ControllerBase
     [HttpGet]
     public string Get(string?userId, string? channelId, string? command, string? responseUrl)
     {
-        var keystamp = $"(U:{userId}, C:{channelId}, T:{DateTime.UtcNow})";
+        var now = DateTime.UtcNow.ToString("o");
+        var keystamp = $"(U:{userId}, C:{channelId}, T:{now})";
 
         if(!ValidateCommand(userId, channelId))
             return respondToUrl(responseUrl, keystamp, "Invalid user");
