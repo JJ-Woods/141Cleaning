@@ -39,11 +39,13 @@ public class _141CleaningController : ControllerBase
     [HttpGet]
     public string Get(string?userId, string? channelId, string? command, string? responseUrl)
     {
+        var keystamp = $"(U:{userId}, C:{channelId}, T:{DateTime.UtcNow})";
+
         if(!ValidateCommand(userId, channelId))
-            return respondToUrl(responseUrl,"Invalid user");
+            return respondToUrl(responseUrl, keystamp, "Invalid user");
 
         if(!(command is string))
-            return respondToUrl(responseUrl,"Null command");
+            return respondToUrl(responseUrl, keystamp, "Null command");
 
         var commandMatches = _commandTree.Where(c => {
             return Regex.Match(command, c.Regex, RegexOptions.IgnoreCase).Success;
@@ -51,11 +53,11 @@ public class _141CleaningController : ControllerBase
 
         if(commandMatches.Count() == 1)
         {
-            return respondToUrl(responseUrl, commandMatches.Single().Execute(command));
+            return respondToUrl(responseUrl, keystamp, commandMatches.Single().Execute(command));
         }
         else
         {
-            return respondToUrl(responseUrl,$"Invalid command: {command}");
+            return respondToUrl(responseUrl, keystamp, $"Invalid command: {command}");
         }
     }
 
@@ -73,9 +75,10 @@ public class _141CleaningController : ControllerBase
         return false;
     }
 
-    private string respondToUrl(string responseUrl, string message)
+    private string respondToUrl(string responseUrl, string keystamp, string message)
     {
-        _slackConnector.RespondToUrl(responseUrl, message);
-        return message;
+        var response = $"{keystamp} {message}";
+        _slackConnector.RespondToUrl(responseUrl, response);
+        return response;
     }
 }
