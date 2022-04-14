@@ -12,18 +12,32 @@ public class _141CleaningController : ControllerBase
 
     private readonly IEnumerable<ICommand> _commandTree;
 
+    private readonly IEnumerable<CommandValidation> _commandValidations;
+
     public _141CleaningController(ILogger<_141CleaningController> logger)
     {
         _logger = logger;
+
         _commandTree = new List<ICommand>
         {
             new TestCommand()
         };
+
+        _commandValidations = new List<CommandValidation>
+        {
+            new CommandValidation("U024K2U11NK", "C037A17E04E"),
+            new CommandValidation("U024K2U11NK", "C039VPSH143"),
+            new CommandValidation("U025V41QCSF", "C037A17E04E"),
+            new CommandValidation("U025V41QCSF", "C039VPSH143")
+        };
     }
 
     [HttpGet]
-    public string Get(string? command)
+    public string Get(string?userId, string? channelId, string? command)
     {
+        if(!ValidateCommand(userId, channelId))
+            return "Invalid user";
+
         if(!(command is string))
             return "Null command";
 
@@ -39,5 +53,19 @@ public class _141CleaningController : ControllerBase
         {
             return $"Invalid command: {command}";
         }
+    }
+
+    private bool ValidateCommand(string? userId, string? channelId)
+    {
+        if
+        (
+            userId is string 
+            && channelId is string
+            && _commandValidations.Any(cv => cv.UserId == userId && cv.ChannelId == channelId)
+        )
+            return true;
+        
+        //ELSE
+        return false;
     }
 }
